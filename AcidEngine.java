@@ -29,6 +29,7 @@
    import com.drew.metadata.*;
    import com.drew.metadata.exif.*;
    import com.drew.lang.*;
+   import com.drew.metadata.exif.makernotes.CanonMakernoteDirectory;
 
 public class AcidEngine {
  
@@ -79,7 +80,7 @@ public class AcidEngine {
       try {
          Directory exifDirectory = getDirectory(file);
          if (exifDirectory != null) {
-            cm = exifDirectory.getString(ExifDirectory.TAG_MAKE);
+            cm = exifDirectory.getString(ExifIFD0Directory.TAG_MAKE);
          }
       } catch(Exception exiferr) {
          msgOut(EXTRACTERROR + " CameraMake " + exiferr);
@@ -95,7 +96,7 @@ public class AcidEngine {
       try {
          Directory exifDirectory = getDirectory(file);
          if (exifDirectory != null) {
-            cm = exifDirectory.getString(ExifDirectory.TAG_MODEL);
+            cm = exifDirectory.getString(ExifIFD0Directory.TAG_MODEL);
          }
       } catch(Exception exiferr) {
          msgOut(EXTRACTERROR + " CameraModel " + exiferr);
@@ -111,7 +112,7 @@ public class AcidEngine {
       try {
          Directory exifDirectory = getDirectory(file);
          if (exifDirectory != null) {
-            String cameraMake = exifDirectory.getString(ExifDirectory.TAG_MAKE);
+            String cameraMake = exifDirectory.getString(ExifIFD0Directory.TAG_MAKE);
             if (cameraMake.equals(CANON)) {
                   CanonMakernoteDirectory cd = (CanonMakernoteDirectory)getMakerDirectory(file,CanonMakernoteDirectory.class);
                   icm = cd.getInt(MDOFFSET); 
@@ -133,7 +134,7 @@ public class AcidEngine {
       try {
          Directory exifDirectory = getDirectory(file);
          if (exifDirectory != null) {
-            String cameraMake = exifDirectory.getString(ExifDirectory.TAG_MAKE);
+            String cameraMake = exifDirectory.getString(ExifIFD0Directory.TAG_MAKE);
             if (cameraMake.equals(CANON)) {
                   CanonMakernoteDirectory cd = (CanonMakernoteDirectory)getMakerDirectory(file,CanonMakernoteDirectory.class);
                   fm = cd.getString(FVSOFFSET); 
@@ -157,7 +158,7 @@ public class AcidEngine {
       try {
          Directory exifDirectory = getDirectory(file);
          if (exifDirectory != null) {
-            String cameraMake = exifDirectory.getString(ExifDirectory.TAG_MAKE);
+            String cameraMake = exifDirectory.getString(ExifIFD0Directory.TAG_MAKE);
             if (cameraMake.equals(CANON)) {
                   CanonMakernoteDirectory cd = (CanonMakernoteDirectory)getMakerDirectory(file,CanonMakernoteDirectory.class);
                   fm = cd.getInt(FVOFFSET); 
@@ -205,7 +206,7 @@ public class AcidEngine {
        try {
           Directory exifDirectory = getDirectory(jpeg);
           if (exifDirectory != null) {
-              dt = exifDirectory.getDate(ExifDirectory.TAG_DATETIME_ORIGINAL);
+              dt = exifDirectory.getDate(ExifIFD0Directory.TAG_DATETIME_ORIGINAL);
               if (dt == null) {
                  msgOut("EXIF no date/time for " + jpeg.getName() + " - using file last modified value");
                  dt = new Date(jpeg.lastModified());
@@ -226,7 +227,7 @@ public class AcidEngine {
    Directory getDirectory(File jpeg) {
        try {
           Metadata metadata = JpegMetadataReader.readMetadata(jpeg);
-          return metadata.getDirectory(ExifDirectory.class);
+          return metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
        } catch(Exception exiferr) {
           msgOut(EXTRACTERROR + exiferr);
           return null;                                                
@@ -239,7 +240,7 @@ public class AcidEngine {
    Directory getMakerDirectory(File jpeg, Class makerclass) {
        try {
           Metadata metadata = JpegMetadataReader.readMetadata(jpeg);
-          return metadata.getDirectory(makerclass);
+          return metadata.getFirstDirectoryOfType(makerclass);
        } catch(Exception exiferr) {
           msgOut(EXTRACTERROR + exiferr);
           return null;                                                
