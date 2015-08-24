@@ -82,7 +82,7 @@ public class AcidEngine {
             cm = exifDirectory.getString(ExifDirectory.TAG_MAKE);
          }
       } catch(Exception exiferr) {
-         msgOut(EXTRACTERROR + exiferr);
+         msgOut(EXTRACTERROR + " CameraMake " + exiferr);
       }
       return cm;
    }
@@ -98,7 +98,7 @@ public class AcidEngine {
             cm = exifDirectory.getString(ExifDirectory.TAG_MODEL);
          }
       } catch(Exception exiferr) {
-         msgOut(EXTRACTERROR + exiferr);
+         msgOut(EXTRACTERROR + " CameraModel " + exiferr);
       }
       return cm;
    }
@@ -120,7 +120,7 @@ public class AcidEngine {
             }
          }
       } catch(Exception exiferr) {
-         msgOut(EXTRACTERROR + exiferr);
+         msgOut(EXTRACTERROR + " IntCameraMake " + exiferr);
       }
       return icm;
    }
@@ -142,7 +142,7 @@ public class AcidEngine {
             }
          }
       } catch(Exception exiferr) {
-         msgOut(EXTRACTERROR + exiferr);
+         msgOut(EXTRACTERROR + " StringFV " + exiferr);
       }
       return fm;
    }
@@ -166,7 +166,7 @@ public class AcidEngine {
             }
          }
       } catch(Exception exiferr) {
-         msgOut(EXTRACTERROR + exiferr);
+         msgOut(EXTRACTERROR + " IntFV " + exiferr);
       }
       return fm;
    }

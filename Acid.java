@@ -9,15 +9,17 @@
 * and then downloading the appropriate SDM, CHDK or CHDK-DE build for it.     *
 *                                                                             *
 * Drew Noakes EXIF extraction library is used to extract the necessary EXIF   *
-* information (see www.drewnoakes.com/drewnoakes.com/code/exif/). Two tables  *
-* held at my website (www.zenoshrdlu.com/acid) are then used to construct the *
-* appropriate zip file names and then the SDM and CHDK download sites are     *
-* searched to locate these. An additional table gives information about       *
-* cameras on which CHDK porting is going on.                                  *
+* information (see www.drewnoakes.com/drewnoakes.com/code/exif/). Tables      *
+* held at my website (www.zenoshrdlu.com/acid and www.zenoshrdlu.com/assist)  *
+* are then used to construct the appropriate zip file names and then the SDM  *
+* and CHDK download sites are searched to locate these.                       *
 *                                                                             *
 * To make the program as flexible as possible, values like website addresses  *
 * are held as properties which can therefore be adjusted if necessary without *
 * the need to modify and recompile the source code.                           *
+*                                                                             *
+* A language property file (if present) will be used to translate UI and      *
+* message text.                                                               *
 *                                                                             *
 * This OSX version differs slightly from the Windows version - the changes    *
 * are marked with the string "// apple only"                                  *
@@ -25,13 +27,12 @@
 * Note: feel free to use this source code as you wish provided that you do    *
 * not market or sell a derivative work without my permission.                 *
 *                                                                             *
+* Updated 26th August 2014 to handle the Powershot N Facebook camera          *
+*                                                                             *
+*                                                                             *
 ******************************************************************************/
 
-// make any changes to Windows version too
-
-
-// http://autobuild.akalab.de/CHDK_DE_full.txt
-// http://autobuild.akalab.de/CHDK-DE_full.txt
+// memo to self - make any changes to Windows version too
 
 import java.awt.*;
 import java.awt.List;
@@ -55,14 +56,14 @@ public class Acid extends Frame implements WindowListener,
    static final String URILIST  = "text/uri-list;class=java.lang.String";
 
    static final String TITLE    = "Automatic Camera Identifier and Downloader - Dave Mitchell";
-   static final String VERSION  = "1.14";
+   static final String VERSION  = "1.15";
    static final String CRLF     = "\r\n";
    static final String LF       = "\n";
    static final String ALPHA    = " abcdefghijklmnop";
    static final String ZIPFILE  = "tempcvi.zip";
    static final String JPG      = "JPG";
-   static final String PORT     = "P";
    
+   /* most of the following are default (English) versions of UI elements and messages */
    static final String CHOOSER  = "Choose Download Folder"; // apple version
    static final String DROP1    = "To start, drag and drop a";
    static final String DROP2    = "photo from your camera here";
@@ -109,7 +110,6 @@ public class Acid extends Frame implements WindowListener,
    static final String DWNLDING = "Downloading ";
    
    static final String NOBLDFND = " - no build found for ";
-   static final String PORTING  = "Work is underway porting CHDK for this camera - test builds may be available";
    static final String DROPFAIL = "Dropping failed - try again";
    
    static final String ZIPDOWN  = " zip file being downloaded, please wait...";
@@ -139,14 +139,13 @@ public class Acid extends Frame implements WindowListener,
    static final int    DOSDM    = 1;
    static final int    DOCHDK   = 2;
    static final int    DOCHDKT  = 3;
-//   static final int    DOADD    = 5;
    static final int    DOCHDE   = 4;
    static final int    DOCHDET  = 5;
 
-   AcidEngine acidengine;                         
+   AcidEngine acidengine;  /* obtains EXIF information from jpegs */                        
    FileDialog chooser   = null;
    FileDialog chooser2  = null;
-   AcidWebGet webgetter;
+   AcidWebGet webgetter;   /* obtains webpage text (HTML) and zip files */
 
    /* UI elements */
    TextField  imagefile;
@@ -171,7 +170,6 @@ public class Acid extends Frame implements WindowListener,
    Button     downchde;
    Button     downchdet;
    Button     exit;
-
 
    /* the following values are the defaults for various properties */   
    static final String SDMSITE  = "http://stereo.jpn.org/eng/sdm/";
@@ -281,7 +279,6 @@ public class Acid extends Frame implements WindowListener,
    static final String TBLDOWNPROP  = "tabledown";
    static final String DWNLDINGPROP = "downlding";
    static final String NOBLDFNDPROP = "nobuildfound";
-   static final String PORTINGPROP  = "porting";
    static final String DROPFAILPROP = "dropfail";
    static final String ZIPDOWNPROP  = "zipdown";
    static final String DOWNLOADPROP = "download";
@@ -328,7 +325,6 @@ public class Acid extends Frame implements WindowListener,
    Properties camchdkt= new Properties();
    Properties camchde = new Properties();
    Properties camchdet= new Properties();
-//   Properties camadd  = new Properties();
 
    String proptitle     =  null;
    String propchooser   =  null;
@@ -373,7 +369,6 @@ public class Acid extends Frame implements WindowListener,
    String proptbldown   =  null;
    String propdwnlding  =  null;
    String propnobldfnd  =  null;
-   String propporting   =  null;
    String propdropfail  =  null;
    String propzipdown   =  null;
    String propdownload  =  null;
@@ -381,24 +376,24 @@ public class Acid extends Frame implements WindowListener,
    String propdchdkbut  =  null;
    String propdchdkbutt =  null;
    String propdchdebut  =  null;
-   String propdchdebutt  =  null;
+   String propdchdebutt =  null;
    String propbrowbut   =  null;
    String propbrowbut2  = null;
 
    String chdkfnd       = null;
    String chdktfnd      = null;
    String chdefnd       = null;
-   String chdetfnd       = null;
+   String chdetfnd      = null;
    String sdmfnd        = null;
    String chdksrch      = null;
    String chdktsrch     = null;
    String chdesrch      = null;
-   String chdetsrch      = null;
+   String chdetsrch     = null;
    String sdmsrch       = null;
    String nochdk        = null;
    String nochdkt       = null;
    String nochde        = null;
-   String nochdet        = null;
+   String nochdet       = null;
    String nosdm         = null;
    
    String szip  = null;
@@ -422,7 +417,6 @@ public class Acid extends Frame implements WindowListener,
    String sdmpage  = null;
    String chdkpage = null;
    String chdkpaget= null;
-//   String chdkpalt = null;
    String chdepage = null;
    String chdepaget= null;
    String sdmadd   = null;
@@ -506,7 +500,6 @@ public class Acid extends Frame implements WindowListener,
       sdmpage  = getProperty(SPGPROP);
       chdkpage = getProperty(CPGPROP);
       chdkpaget= getProperty(CPGPROPT);
-//      chdkpalt = getProperty(CPGAPROP);
       chdepage = getProperty(DPGPROP);
       chdepaget= getProperty(DPGPROPT);
       sdmadd   = getProperty(SADDPROP);
@@ -577,7 +570,7 @@ public class Acid extends Frame implements WindowListener,
       imagefile = new TextField("", 40);
       imagefile.setBackground(Color.cyan);
       imagefile.setForeground(Color.black);
-      imagefile.setEnabled(false);
+      imagefile.setEditable(false);
       c.gridx = 0;
       c.gridy = 1;
       gridbag.setConstraints(imagefile,c);
@@ -620,7 +613,7 @@ public class Acid extends Frame implements WindowListener,
       c.gridy = 3;
       gridbag.setConstraints(dtinfo,c);
       add(dtinfo);
-      dtinfo.setEnabled(false);
+      dtinfo.setEditable(false);
     
       cminfo  = new TextField("", 20);
       cminfo.setBackground(Color.cyan);
@@ -629,7 +622,7 @@ public class Acid extends Frame implements WindowListener,
       c.gridy = 3;
       gridbag.setConstraints(cminfo,c);
       add(cminfo);
-      cminfo.setEnabled(false);
+      cminfo.setEditable(false);
       
       mdinfo  = new TextField("", 20);
       mdinfo.setBackground(Color.cyan);
@@ -638,7 +631,7 @@ public class Acid extends Frame implements WindowListener,
       c.gridy = 3;
       gridbag.setConstraints(mdinfo,c);
       add(mdinfo);
-      mdinfo.setEnabled(false);
+      mdinfo.setEditable(false);
 
       /* fifth row of the GUI - firmware version download folder label */
       c.gridwidth  = 2;
@@ -664,7 +657,7 @@ public class Acid extends Frame implements WindowListener,
       c.gridy = 5;
       gridbag.setConstraints(fminfo,c);
       add(fminfo);
-      fminfo.setEnabled(false);
+      fminfo.setEditable(false);
       
       c.gridwidth  = 2;
       dlfolder  = new TextField("", 30);
@@ -674,7 +667,7 @@ public class Acid extends Frame implements WindowListener,
       c.gridy = 5;
       gridbag.setConstraints(dlfolder,c);
       add(dlfolder);
-      dlfolder.setEnabled(false);  // apple only
+      dlfolder.setEditable(false);  // apple only
       
       String dlf = getProperty(DLPROP);
       if (dlf.length() == 0) {
@@ -780,7 +773,7 @@ public class Acid extends Frame implements WindowListener,
       add(downchde);
       downchde.setEnabled(false);
  
-      /* tenth row of the GUI - CHDKDE trunk choice and download button */
+      /* eleventh row of the GUI - CHDKDE trunk choice and download button */
       c.anchor = GridBagConstraints.WEST;
       chdeallt  = new Checkbox(propchdeallt);
       c.gridx = 2;
@@ -835,19 +828,13 @@ public class Acid extends Frame implements WindowListener,
 
       uipresent = true;
       log.append(uibuffer);
-//      browse.requestFocusInWindow();
       setSize(wprop, hprop);
-//      pack();
       setLocation(50,50); 
       setVisible(true);
       setMessage(proploading);
  
       /* try get the CHDK download webpage */     
       chdkurl = getWebPage(chdksite + chdkpage);
-//      if (chdkurl == null || chdkurl.indexOf(chdkpref) == -1) {
-//         addDebugMessage("CHDK website failed - trying old CHDK website");  
-//         chdkurl = getWebPage(chdksite + chdkpalt);
-//      }   
       if (chdkurl == null) {  
          setMessage(CHDK + propnoload);      
          addLogMessage(CHDK + propnoload);
@@ -863,10 +850,6 @@ public class Acid extends Frame implements WindowListener,
  
       /* and the CHDK trunk page */
       chdkturl = getWebPage(chdksitet + chdkpaget);
-//      if (chdkurl1 == null || chdkurl1.indexOf(chdkpref) == -1) {
-//         addDebugMessage("CHDK website failed - trying old CHDK website");  
-//         chdkurl = getWebPage(chdksite + chdkpalt);
-//      }   
       if (chdkturl == null) {  
          setMessage(CHDKT + propnoload);      
          addLogMessage(CHDKT + propnoload);
@@ -1001,7 +984,6 @@ void loadLanguage(String lang) {
    proptbldown    = getNLSProp(TBLDOWNPROP   ,TBLDOWN);
    propdwnlding   = getNLSProp(DWNLDINGPROP  ,DWNLDING);
    propnobldfnd   = getNLSProp(NOBLDFNDPROP  ,NOBLDFND);
-   propporting    = getNLSProp(PORTINGPROP   ,PORTING);
    propdropfail   = getNLSProp(DROPFAILPROP  ,DROPFAIL);
    propzipdown    = getNLSProp(ZIPDOWNPROP   ,ZIPDOWN);
    propdownload   = getNLSProp(DOWNLOADPROP  ,DOWNLOAD);
@@ -1081,10 +1063,6 @@ void loadLanguage(String lang) {
 			   camchdet = webgetter.getPropertyContent(acidsite+CHDETPROPS);
 			   chdetloaded = (camchdet != null);
 			   return chdetloaded;
-//		    } else if (propfile.equals(ADDPROPS)) {
-//			   camadd = webgetter.getPropertyContent(acidsite+ADDPROPS);
-//			   addloaded = (camadd != null);
-//			   return addloaded;
 		    }
 		 } else {
             addDebugMessage("loading " + propfile + " locally");
@@ -1116,10 +1094,6 @@ void loadLanguage(String lang) {
 			   if (camchdet != null) 
 			   chdetloaded = (camchdet != null);
                return chdetloaded;
-//		    } else if (propfile.equals(ADDPROPS)) {
-//			   camadd = loadLocalProperties(ADDPROPS);
-//			   addloaded = (camadd != null);
-//			   return addloaded;
 		    }
          }
          return false;
@@ -1201,9 +1175,6 @@ void loadLanguage(String lang) {
 /*        fmv     is the actual firmware version                              */
 /*        camera  is the name of the camera embedded in the zipfile name in   */
 /*                the download website html                                   */
-/*  This method also searches an additional table for porting information. In */
-/*  this case the firmware version is ignored. The table entries either say   */
-/*  "D" if a dump exists or "P" if CHDK porting is underway.                  */
 /*  Note that if the 'local' property is set to 'yes' then ACID looks for the */
 /*  camera property files locally rather than on my website.                  */
 /*----------------------------------------------------------------------------*/
@@ -1268,6 +1239,8 @@ void loadLanguage(String lang) {
       int fm;
       int icm;
       String cam;
+      String decodefm;
+      String fms;
       
       setCHDKDownload(false);
       setCHDKDownloadt(false);
@@ -1286,10 +1259,24 @@ void loadLanguage(String lang) {
          cminfo.setText(acidengine.getCameraMake());
          mdinfo.setText(acidengine.getCameraModel());
          fm = acidengine.getFirmwareVersion();
+         
+         addLogMessage("fm="+fm+" hex="+Integer.toHexString(fm));
+         if (fm == -1588592640) {
+            addLogMessage("N Facebook camera detected");
+            // Powershot N Facebook case
+            fms = "100a";
+            icm = 54001665; // 3380001
+            decodefm = fms;
+            mdinfo.setText(acidengine.getCameraModel() + " FaceBook");
+         } else {
+            icm = acidengine.getIntCameraModel();
+            fms = acidengine.getStringFirmwareVersion();
+            decodefm = decode(fm);
+         }
+  
+         
          /* get the model-unique numeric identifier for the camera - we may know the 'model name'  */
          /* but this is not easy to match with the name used in the SDM and CHDK download webpages */
-         icm = acidengine.getIntCameraModel();
-         String fms = acidengine.getStringFirmwareVersion();
          if (debug)
             addDebugMessage("fm=" + fm + " icm=" + Integer.toHexString(icm) + " fms='" + fms + "'");
          if (fm == AcidEngine.NOFINFO) {
@@ -1304,12 +1291,12 @@ void loadLanguage(String lang) {
             return;
          } else {
             /* decode the firmware info */
-            fminfo.setText(decode(fm));
+            fminfo.setText(decodefm);
          }
          /* at this point we know it's a Canon and have its model name, id and firmware version */
          /* so we can search the CHDK and SDM download sites for suitable builds */
          if (ctabloaded) {
-            cam = getCameraProperty(DOCHDK, "0x" + Integer.toHexString(icm) + "-" + decode(fm));
+            cam = getCameraProperty(DOCHDK, "0x" + Integer.toHexString(icm) + "-" + decodefm);
             if (cam != null) {
                addLogMessage(chdksrch + cam);
                czip = clocate(chdkpref + cam);
@@ -1323,19 +1310,14 @@ void loadLanguage(String lang) {
                   setCHDKDownload(true);
                   addLogMessage(chdkfnd + czip2);
                } else {
-                  addLogMessage(nochdk + mdinfo.getText() + " " + decode(fm));
+                  addLogMessage(nochdk + mdinfo.getText() + " " + decodefm);
                }   
-//            } else {  /* not found, so look in the additions table to see if porting is underway */
-//               addLogMessage(nochdk + mdinfo.getText() + " " + decode(fm));
-//               cam = getCameraProperty(DOADD, "0x" + Integer.toHexString(icm));
-//               if (cam != null && cam.startsWith(PORT))
-//                  addLogMessage(propporting);
             } else {  
-               addLogMessage(nochdk + mdinfo.getText() + " " + decode(fm));
+               addLogMessage(nochdk + mdinfo.getText() + " " + decodefm);
             }
          }
          if (ctabtloaded) {
-            cam = getCameraProperty(DOCHDKT, "0x" + Integer.toHexString(icm) + "-" + decode(fm));
+            cam = getCameraProperty(DOCHDKT, "0x" + Integer.toHexString(icm) + "-" + decodefm);
             if (cam != null) {
                addLogMessage(chdktsrch + cam);
                czipt = clocatet(chdkpref + cam);
@@ -1349,20 +1331,15 @@ void loadLanguage(String lang) {
                   setCHDKDownloadt(true);
                   addLogMessage(chdktfnd + czipt2);
                } else {
-                  addLogMessage(nochdkt + mdinfo.getText() + " " + decode(fm));
+                  addLogMessage(nochdkt + mdinfo.getText() + " " + decodefm);
                }   
-//            } else {  /* not found, so look in the additions table to see if porting is underway */
-//               addLogMessage(nochdk + mdinfo.getText() + " " + decode(fm));
-//               cam = getCameraProperty(DOADD, "0x" + Integer.toHexString(icm));
-//               if (cam != null && cam.startsWith(PORT))
-//                  addLogMessage(propporting);
             } else {  
-               addLogMessage(nochdkt + mdinfo.getText() + " " + decode(fm));
+               addLogMessage(nochdkt + mdinfo.getText() + " " + decodefm);
             }
          }
          if (dtabloaded) {
 		    String dz;
-            cam = getCameraProperty(DOCHDE, "0x" + Integer.toHexString(icm) + "-" + decode(fm));
+            cam = getCameraProperty(DOCHDE, "0x" + Integer.toHexString(icm) + "-" + decodefm);
             if (cam != null) {
                addLogMessage(chdesrch + cam);
                dz = dlocate(chdeurl, cam);
@@ -1375,13 +1352,13 @@ void loadLanguage(String lang) {
                   chdecamname = cam;
                }
             } else {  
-               addLogMessage(nochde + mdinfo.getText() + " " + decode(fm));
+               addLogMessage(nochde + mdinfo.getText() + " " + decodefm);
             }
             
          }
          if (dtabtloaded) {
 		    String dz;
-            cam = getCameraProperty(DOCHDET, "0x" + Integer.toHexString(icm) + "-" + decode(fm));
+            cam = getCameraProperty(DOCHDET, "0x" + Integer.toHexString(icm) + "-" + decodefm);
             if (cam != null) {
                addLogMessage(chdetsrch + cam);
                dz = dlocate(chdeturl, cam);
@@ -1393,23 +1370,12 @@ void loadLanguage(String lang) {
                   setCHDEDownloadt(true);
                   chdetcamname = cam;
                }
-//               dz = dlocate2(cam);
-//               if (dz != null) {
-//                  if (dz.indexOf(chdepref) != -1)
-//				     dzip=dz;
-//				  else
-//				  	 dzip2=dz; 
-//                  setCHDEDownloadt(true);
-//                  addLogMessage(chdetfnd + dz);
-//               } else {
-//                  addLogMessage(nochdet + mdinfo.getText() + " " + decode(fm));
-//               }   
             } else {  
-               addLogMessage(nochdet + mdinfo.getText() + " " + decode(fm));
+               addLogMessage(nochdet + mdinfo.getText() + " " + decodefm);
             }
          }
          if (stabloaded) {
-            cam = getCameraProperty(DOSDM, "0x" + Integer.toHexString(icm) + "-" + decode(fm));
+            cam = getCameraProperty(DOSDM, "0x" + Integer.toHexString(icm) + "-" + decodefm);
             if (cam != null) {
                addLogMessage(sdmsrch + cam);
                
@@ -1428,7 +1394,7 @@ void loadLanguage(String lang) {
                }   
                szip2 = slocate(sdmadd);  
             } else {
-               addLogMessage(nosdm + mdinfo.getText() + " " + decode(fm));
+               addLogMessage(nosdm + mdinfo.getText() + " " + decodefm);
             }
          }
          if (szip!= null && czip != null && czipt != null && dzip != null && dzipt != null)
@@ -1467,25 +1433,16 @@ void loadLanguage(String lang) {
 /*      A = a for Alpha, b for Beta, 0 for neither                                              */
 /*      Vvv = version V.vv                                                                      */
 /*      RRrr = revision RR.rr (1.00=a, 2.00=b, etc)                                             */
+/*                                                                                              */
+/*      Decode logic has been drastically simplified in version 1.15                            */
 /*----------------------------------------------------------------------------------------------*/
    public String decode(int fv) {
      int a, v, r, i1, i2, i3, i4, j;
-     String s;
-     i1 = fv%256;
-     j  = fv/256;
-     i2 = j%256;
-     j  = j/256;
-     i3 = j%256;
-     i4 = j/256;
-     a  = i4/16;
-     v  = i4%16;
-     s  = "";
-     if (a != 0) {
-        s = (a == 10 ? "Alpha " : "Beta ");
-     }
-     s = "" + (100*v  + i3) + ALPHA.substring(i2,i2+1);
+     String s, s1;
      
-     return s;
+     s = Integer.toHexString(fv);
+     if (s.length()==7) s = " " + s;
+     return s.substring(1,4) + ALPHA.charAt((fv/256)%256);
    }
  
 /*----------------------------------------------------------------------------*/
@@ -1527,9 +1484,6 @@ void loadLanguage(String lang) {
           
  j = page.indexOf(LF,i);
  k = page.lastIndexOf(LF, i);
- 
-// System.out.println("i=" + i + " j=" + j + " k=" + k + " len=" + (j-k-1));
-// System.out.println("zip='" + page.substring(k+1,j) + "'");         
        return page.substring(k+1,j);
    }
    
@@ -1547,13 +1501,6 @@ void loadLanguage(String lang) {
          return locate2(chdkturl, s);
    }   
      
-/*----------------------------------------------------------------------------*/
-/*  locate a full/simple download reference in the CHDK-DE webpage            */
-/*----------------------------------------------------------------------------*/
-//   public String dlocate2(String s) {
-//         return locate3(chdeurl, s);
-//   }
-   
 /*----------------------------------------------------------------------------*/
 /*  locate a reference in a webpage                                           */
 /*----------------------------------------------------------------------------*/
@@ -1760,7 +1707,6 @@ void loadLanguage(String lang) {
                    if (directory != null) {
                       File parent = new File(dlp + directory);
                       boolean rc = parent.mkdirs();
-//                      System.out.println("rc=" + rc);          
                    }
                    fileoutputstream = new FileOutputStream(dlp + entryName);             
                    while ((l = zipinputstream.read(buff, 0, 1024)) > -1)
@@ -1812,11 +1758,6 @@ void loadLanguage(String lang) {
       downchdet.setEnabled(b);
    }
 
-//   public void setAll(boolean b) {
-//      downsdm.setEnabled(b);
-//      downchdk.setEnabled(b);
-//   }
-
    public void addLogMessage(String m) {
          if (uipresent)
             log.append(CRLF + m);
@@ -1845,7 +1786,6 @@ void loadLanguage(String lang) {
       if (o == exit) {
           doClose();
       } else if (o == browse) {
-      
          /* set the OSX system property that lets a folder (not a file) be selectable */
          System.setProperty(DIRDLG, "true"); // apple only
          chooser.setDirectory(dlfolder.getText());
@@ -2045,14 +1985,12 @@ void loadLanguage(String lang) {
          bos = new BufferedOutputStream(out);
          dataOut = new DataOutputStream(bos);
       } catch(IOException e) {
-//
       }
       try {
          dataOut.writeBytes(log.getText());
          dataOut.flush();
          out.close();
       } catch(IOException e) {
-//
       }
    }
 
